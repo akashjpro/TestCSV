@@ -19,48 +19,33 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private static final String EXTERNAL_PATH = Environment.getExternalStorageDirectory().getPath() + "/";
-    private static final String FILE_NAME = "file_new.csv";
+    private static final String FILE_NAME = "test2.csv";
     private static final String TAG = "MainActivity";
-    private static final String HOST_NAME = "ftp.akashjpro.esy.es";
-    private static final String USER_NAME = "u413200587";
-    private static final String PASS = "AKSpro2020";
-    private static final int    PORT = 21;
+    private static final String HOST_NAME = "192.168.0.102";
+    private static final String USER_NAME = "Aka";
+    private static final String PASS_WORD = "0906304280";
 
     private Button mBtnUpload;
-
-    private MyFTPClientFunctions ftpclient = null;
     private UploadFile mUploadFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ftpclient = new MyFTPClientFunctions(this);
         mBtnUpload = (Button) findViewById(R.id.btn_upload);
-        mUploadFile = new UploadFile(this);
 
         checkAndRequestPermissions();
 
         mBtnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mUploadFile.execute(FILE_NAME);
-                    }
-                });
-
-
-//                new Thread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        boolean kq = ftpclient.ftpConnect(HOST_NAME, USER_NAME, PASS, PORT);
-//                        if (kq){
-//                        }
-//                    }
-//                }).start();
+                mUploadFile = new UploadFile(MainActivity.this);
+                mUploadFile.execute(HOST_NAME,
+                                    USER_NAME,
+                                    PASS_WORD,
+                                    FILE_NAME,
+                                    EXTERNAL_PATH
+                );
 
             }
         });
@@ -68,43 +53,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public void uploadFile(View view) {
-
-
-
-//        FTP ftpClient = new FTPClient();
-//        String path = EXTERNAL_PATH + FILE_NAME ;
-
-//        try {
-//
-//            ftpClient.connect("ftp.akashjpro.esy.es", 21);
-//            ftpClient.login("u413200587", "AKSpro2020");
-//            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-//            ftpClient.changeWorkingDirectory("/upload/");
-//            ftpClient.enterLocalPassiveMode(); // important!
-//
-//            FileInputStream in = new FileInputStream(new File(path));
-//            boolean result = ftpClient.storeFile("/"+FILE_NAME, in);
-//            in.close();
-//            if (result) Log.d("upload result", "succeeded");
-//            ftpClient.logout();
-//            ftpClient.disconnect();
-//            Toast.makeText(this, "upload success", Toast.LENGTH_SHORT).show();
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    boolean kq = ftpclient.ftpConnect(HOST_NAME, USER_NAME, PASS, PORT);
-                    if (kq){
-                        Toast.makeText(MainActivity.this, "Connect success.", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-    }
 
     public void createFile(View view) {
         try {
@@ -127,37 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-//    public boolean ftpConnect(String host, String username, String password,
-//                              int port) {
-//        FTPClient mFTPClient = new FTPClient();
-//        try {
-//            mFTPClient = new FTPClient();
-//            // connecting to the host
-//            mFTPClient.connect(host, port);
-//
-//            // now check the reply code, if positive mean connection success
-//            if (FTPReply.isPositiveCompletion(mFTPClient.getReplyCode())) {
-//                // login using username & password
-//                boolean status = mFTPClient.login(username, password);
-//
-//				/*
-//				 * Set File Transfer Mode
-//				 *
-//				 * To avoid corruption issue you must specified a correct
-//				 * transfer mode, such as ASCII_FILE_TYPE, BINARY_FILE_TYPE,
-//				 * EBCDIC_FILE_TYPE .etc. Here, I use BINARY_FILE_TYPE for
-//				 * transferring text, image, and compressed files.
-//				 */
-//                mFTPClient.setFileType(FTP.BINARY_FILE_TYPE);
-//                mFTPClient.enterLocalPassiveMode();
-//                return status;
-//            }
-//        } catch (Exception e) {
-//            Log.d(TAG, "Error: could not connect to host " + host);
-//        }
-//
-//        return false;
-//    }
 
     private void checkAndRequestPermissions() {
         String[] permissions = new String[]{
