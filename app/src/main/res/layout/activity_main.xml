@@ -22,9 +22,8 @@
         app:layout_constraintLeft_toLeftOf="parent" />
 
     <Button
-        android:onClick="uploadFile"
         android:textAllCaps="false"
-        android:id="@+id/button2"
+        android:id="@+id/btn_upload"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Upload file CSV"
