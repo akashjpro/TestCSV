@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.File;
@@ -18,15 +19,25 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String EXTERNAL_PATH = Environment.getExternalStorageDirectory().getPath() + "/";
-    private static final String FILE_NAME = "test2.csv";
+    private static final
+        String EXTERNAL_PATH
+            = Environment.getExternalStorageDirectory()
+                         .getPath() + "/";
+//    private static final String FILE_NAME = "test1.csv";
     private static final String TAG = "MainActivity";
-    private static final String HOST_NAME = "192.168.0.102";
-    private static final String USER_NAME = "Aka";
-    private static final String PASS_WORD = "0906304280";
+    private static final String HOST_NAME = "192.168.8.54";
+    private static final String USER_NAME = "ISB-VIETNAM\\tmha";
+    private static final String PASS_WORD = "AKSpro2020";
+
+    private static final String PORT = "21";
+
 
     private Button mBtnUpload;
     private UploadFile mUploadFile;
+    private EditText mEdtFileName;
+    private String mFileName;
+    private String mPathFile;
+    private ArrayList<String> mListPathFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,20 +46,38 @@ public class MainActivity extends AppCompatActivity {
         mBtnUpload = (Button) findViewById(R.id.btn_upload);
 
         checkAndRequestPermissions();
+        mEdtFileName = (EditText) findViewById(R.id.edt_file_name);
+        mListPathFile = new ArrayList<>();
+
 
         mBtnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mUploadFile = new UploadFile(MainActivity.this);
+                mUploadFile = new UploadFile(MainActivity.this, mListPathFile);
                 mUploadFile.execute(HOST_NAME,
                                     USER_NAME,
                                     PASS_WORD,
-                                    FILE_NAME,
-                                    EXTERNAL_PATH
+                                    PORT
                 );
-
             }
         });
+    }
+
+    /**
+     * get name from file path
+     * @param pathFile
+     * @return
+     */
+    private String getFileName(String pathFile){
+        try {
+            int index = pathFile.lastIndexOf("/");
+            String result = pathFile.substring(index + 1) ;
+            return result;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return null ;
     }
 
 
@@ -56,21 +85,30 @@ public class MainActivity extends AppCompatActivity {
 
     public void createFile(View view) {
         try {
-            String path = EXTERNAL_PATH + FILE_NAME ;
-            File file = new File(path);
-            if(!file.exists()){
-                file.createNewFile();
+            String name = mEdtFileName.getText()
+                                      .toString().trim();
+            for (int i=0; i< 10; i++) {
+                String fileName = name + i + ".csv";
+                String path = EXTERNAL_PATH + fileName;
+                mListPathFile.add(path);
+                File file = new File(path);
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+                FileOutputStream outputStream
+                        = new FileOutputStream(path, true);
+                String dataCSV = "00,11,11,00,00,00,00,00,11,11,00,00,00,00,11,11,00,00,00,00,00,11,11,00,00,00,00";
+                byte[] buff = dataCSV.getBytes();
+                outputStream.write(buff, 0, buff.length);
+                outputStream.close();
             }
-            FileOutputStream outputStream = new FileOutputStream(path, true);
-            String dataCSV = "00,11,11,00,00,00,00";
-            byte[] buff = dataCSV.getBytes();
-            outputStream.write(buff, 0, buff.length);
-            outputStream.close();
-            Toast.makeText(this, "Save file CSV success", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Save file CSV success",
+                    Toast.LENGTH_SHORT).show();
         }catch (Exception e){
             e.printStackTrace();
 
-            Toast.makeText(this, "Save error: "+ e.toString(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Save error: "+
+                    e.toString(), Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -83,12 +121,15 @@ public class MainActivity extends AppCompatActivity {
         };
         List<String> listPermissionsNeeded = new ArrayList<>();
         for (String permission : permissions) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, permission)
+                    != PackageManager.PERMISSION_GRANTED) {
                 listPermissionsNeeded.add(permission);
             }
         }
         if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), 1);
+            ActivityCompat.requestPermissions(this,
+                    listPermissionsNeeded
+                            .toArray(new String[listPermissionsNeeded.size()]), 1);
         }
     }
 

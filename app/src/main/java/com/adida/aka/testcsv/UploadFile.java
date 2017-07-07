@@ -13,31 +13,29 @@ import org.apache.commons.net.ftp.FTPReply;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by tmha on 7/6/2017.
  */
 
-public class UploadFile extends AsyncTask<String, Void, String> {
+public class UploadFile extends AsyncTask<String, Void, String>{
 
-    private static final int    PORT = 21;
     private static final String TAG = "MainActivity";
+    public  ProgressDialog mDialog;
 
-    private String mHostName;
-    private String mUserName;
-    private String mPassWord;
-    private String mFileName;
-    private String mPathFile;
-
-    private ProgressDialog mDialog;
+    private String mHostName, mUserName, mPassWord;
+    private int mPort;
+    private List<String> mListPath;
 
 
     private Context mContext;
 
     private FTPClient mFTPClient = new FTPClient();
 
-    public UploadFile(Context mContext) {
+    public UploadFile(Context mContext, List<String> mListPath) {
         this.mContext = mContext;
+        this.mListPath = mListPath;
     }
 
     @Override
@@ -45,30 +43,40 @@ public class UploadFile extends AsyncTask<String, Void, String> {
         super.onPreExecute();
         mDialog = new ProgressDialog(mContext);
         mDialog.setMessage("Uploading...");
+        mDialog.setCanceledOnTouchOutside(false);
         mDialog.show();
     }
 
     @Override
     protected String doInBackground(String... params) {
         try {
-            mHostName = params[0];
-            mUserName = params[1];
-            mPassWord = params[2];
-            mFileName = params[3];
-            mPathFile = params[4] + mFileName;
-            boolean resultConnect = ftpConnect(mHostName, mUserName, mPassWord, PORT);
+            String result = "";
+            mHostName = params[0]; // set hostname
+            mUserName = params[1]; // set username
+            mPassWord = params[2]; // set pass
+            mPort     = Integer.parseInt(params[3]); //set Port
+            boolean resultConnect = ftpConnect(mHostName,
+                                mUserName,
+                                mPassWord,
+                                mPort);
             if (resultConnect){
-               boolean resultUpload = ftpUpload(mPathFile, mFileName);
-                if (resultUpload){
-                    return "Upload success";
+                for (int i=0; i< mListPath.size(); i++) {
+                    String pathFile = mListPath.get(i);
+                    String fileName = getFileName(pathFile);
+                    ftpUpload(pathFile, fileName);
                 }
+                result = "Upload success";
+            }else {
+                result = "Connect to server fail, " +
+                        "please check host name or username and password again!!!";
             }
-            return "Upload fail!!!";
+            return result;
         }catch (Exception e){
             e.printStackTrace();
             String error ="Failure : " + e.getLocalizedMessage();
             Log.d(TAG, error);
-            return error;
+            mDialog.dismiss();
+            return "upload fail!!!";
         }
     }
 
@@ -77,9 +85,12 @@ public class UploadFile extends AsyncTask<String, Void, String> {
         super.onPostExecute(s);
         mDialog.dismiss();
         Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
+
     }
 
-    public boolean ftpConnect(String host, String username, String password,
+    public boolean ftpConnect(String host,
+                              String username,
+                              String password,
                               int port) {
         boolean result = false;
         try {
@@ -99,8 +110,7 @@ public class UploadFile extends AsyncTask<String, Void, String> {
         return result;
     }
 
-    public boolean ftpUpload(String pathFile, String fileName){
-        boolean result = false;
+    public void ftpUpload(String pathFile, String fileName){
         /*
          * Set File Transfer Mode
          * transfer mode, such as ASCII_FILE_TYPE, BINARY_FILE_TYPE,
@@ -110,7 +120,7 @@ public class UploadFile extends AsyncTask<String, Void, String> {
             mFTPClient.enterLocalPassiveMode(); // important!
 
             FileInputStream in = new FileInputStream(new File(pathFile));
-            result = mFTPClient.storeFile("/"+ fileName, in);
+            mFTPClient.storeFile("/"+ fileName, in);
             in.close();
 //            mFTPClient.logout();
 //            mFTPClient.disconnect();
@@ -118,8 +128,23 @@ public class UploadFile extends AsyncTask<String, Void, String> {
             e.printStackTrace();
             Log.d(TAG, "Error: could upload file " + fileName);
         }
+    }
 
-        return result;
+    /**
+     * get name from file path
+     * @param pathFile
+     * @return
+     */
+    private String getFileName(String pathFile){
+        try {
+            int index = pathFile.lastIndexOf("/");
+            String result = pathFile.substring(index + 1) ;
+            return result;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return null ;
     }
 
 
