@@ -13,25 +13,27 @@ import org.apache.commons.net.ftp.FTPReply;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by tmha on 7/6/2017.
  */
 
-public class UploadFile extends AsyncTask<String, Void, String>{
+public class UploadFile extends AsyncTask<String, Integer, String> implements AsyncTaskExecInterface{
 
-    private static final String TAG = "MainActivity";
+    private final String TAG = this.getClass().getName();
+
     public  ProgressDialog mDialog;
 
     private String mHostName, mUserName, mPassWord;
     private int mPort;
     private List<String> mListPath;
 
-
     private Context mContext;
 
     private FTPClient mFTPClient = new FTPClient();
+    private List<String> mListFileFail = new ArrayList<>();
 
     public UploadFile(Context mContext, List<String> mListPath) {
         this.mContext = mContext;
@@ -44,6 +46,8 @@ public class UploadFile extends AsyncTask<String, Void, String>{
         mDialog = new ProgressDialog(mContext);
         mDialog.setMessage("Uploading...");
         mDialog.setCanceledOnTouchOutside(false);
+        mDialog.setMax(mListPath.size());
+        mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mDialog.show();
     }
 
@@ -62,10 +66,23 @@ public class UploadFile extends AsyncTask<String, Void, String>{
             if (resultConnect){
                 for (int i=0; i< mListPath.size(); i++) {
                     String pathFile = mListPath.get(i);
-                    String fileName = getFileName(pathFile);
-                    ftpUpload(pathFile, fileName);
+                    String fileName = getFileName(pathFile) + i;
+                    boolean resultFile = ftpUpload(pathFile, fileName);
+                    if (!resultFile){
+                        mListFileFail.add(fileName);
+                    }else {
+                        publishProgress(i + 1);
+                    }
                 }
-                result = "Upload success";
+
+                int totalFileSuccess = mListPath.size() - mListFileFail.size();
+                int totalFileFail    = mListFileFail.size();
+                if(totalFileFail > 0){
+                    result = totalFileSuccess + "file succes"
+                            + ", " + totalFileFail + "file fail";
+                }else {
+                    result = "Upload success";
+                }
             }else {
                 result = "Connect to server fail, " +
                         "please check host name or username and password again!!!";
@@ -78,6 +95,12 @@ public class UploadFile extends AsyncTask<String, Void, String>{
             mDialog.dismiss();
             return "upload fail!!!";
         }
+    }
+
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+        mDialog.setProgress(values[0]);
     }
 
     @Override
@@ -110,23 +133,26 @@ public class UploadFile extends AsyncTask<String, Void, String>{
         return result;
     }
 
-    public void ftpUpload(String pathFile, String fileName){
+    public boolean ftpUpload(String pathFile, String fileName){
         /*
          * Set File Transfer Mode
          * transfer mode, such as ASCII_FILE_TYPE, BINARY_FILE_TYPE,
          */
+        boolean result = false;
         try {
             mFTPClient.setFileType(FTP.BINARY_FILE_TYPE);
             mFTPClient.enterLocalPassiveMode(); // important!
 
             FileInputStream in = new FileInputStream(new File(pathFile));
-            mFTPClient.storeFile("/"+ fileName, in);
+            result = mFTPClient.storeFile("/"+ fileName, in);
             in.close();
+            return result;
 //            mFTPClient.logout();
 //            mFTPClient.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
             Log.d(TAG, "Error: could upload file " + fileName);
+            return result;
         }
     }
 
@@ -145,6 +171,12 @@ public class UploadFile extends AsyncTask<String, Void, String>{
         }
 
         return null ;
+    }
+
+
+    @Override
+    public <T> void execute(AsyncTask<T, ?, ?> task, T... args) {
+        task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, args);
     }
 
 
