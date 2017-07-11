@@ -1,8 +1,12 @@
 package com.adida.aka.testcsv;
 
 import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
+import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -31,6 +35,16 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
     private List<String> mListPath;
 
     private Context mContext;
+    private ConnectServerFTPService mConnectServerFTPService;
+    private ServiceConnection mServiceConnection;
+    private boolean isConnected;
+
+    private static final String HOST_NAME = "1922.168.0.102";
+    private static final String USER_NAME = "Aka";
+    //    private static final String USER_NAME = "ISB-VIETNAM\\tmha";
+    private static final String PASS_WORD = "0906304280";
+
+    private static final int PORT = 21;
 
     private FTPClient mFTPClient = new FTPClient();
     private List<String> mListFileFail = new ArrayList<>();
@@ -43,6 +57,23 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
+        connectService();
+        if (!isConnected){
+            Toast.makeText(mContext, "No connet to service", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        boolean resultConnect = mConnectServerFTPService.ftpConnect(
+                                    HOST_NAME,
+                                    USER_NAME,
+                                    PASS_WORD,
+                                    PORT
+        );
+
+        if (!resultConnect){
+            Toast.makeText(mContext, "No connect to server, please check hostname, ...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         mDialog = new ProgressDialog(mContext);
         mDialog.setMessage("Uploading...");
         mDialog.setCanceledOnTouchOutside(false);
@@ -111,6 +142,26 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
 
     }
 
+
+    private void connectService(){
+        Intent intent = new Intent(mContext, ConnectServerFTPService.class);
+        mServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                ConnectServerFTPService.MyBinder myBinder = (ConnectServerFTPService.MyBinder) service;
+                mConnectServerFTPService = myBinder.getService();
+                isConnected = true;
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                isConnected = false;
+                mConnectServerFTPService = null;
+            }
+        };
+        mContext.bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
     public boolean ftpConnect(String host,
                               String username,
                               String password,
@@ -177,6 +228,10 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
     @Override
     public <T> void execute(AsyncTask<T, ?, ?> task, T... args) {
         task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, args);
+    }
+
+    public void disconnectService(){
+        mContext.unbindService(mServiceConnection);
     }
 
 

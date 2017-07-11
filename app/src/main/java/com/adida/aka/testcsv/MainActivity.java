@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             String name = mEdtFileName.getText()
                                       .toString().trim();
-            for (int i=0; i< 50; i++) {
+            for (int i=0; i< 2; i++) {
                 String fileName = name + i + ".csv";
                 String path = EXTERNAL_PATH + fileName;
                 mListPathFile.add(path);
@@ -283,5 +283,11 @@ public class MainActivity extends AppCompatActivity {
         });
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mUploadFile.disconnectService();
+        super.onDestroy();
     }
 }
