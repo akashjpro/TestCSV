@@ -39,10 +39,9 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
     private ServiceConnection mServiceConnection;
     private boolean isConnected;
 
-    private static final String HOST_NAME = "1922.168.0.102";
-    private static final String USER_NAME = "Aka";
-    //    private static final String USER_NAME = "ISB-VIETNAM\\tmha";
-    private static final String PASS_WORD = "0906304280";
+    private static final String HOST_NAME = "192.168.8.54";
+    private static final String USER_NAME = "ISB-VIETNAM\\tmha";
+    private static final String PASS_WORD = "AKSpro2020";
 
     private static final int PORT = 21;
 
@@ -57,29 +56,28 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        connectService();
-        if (!isConnected){
-            Toast.makeText(mContext, "No connet to service", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        boolean resultConnect = mConnectServerFTPService.ftpConnect(
-                                    HOST_NAME,
-                                    USER_NAME,
-                                    PASS_WORD,
-                                    PORT
-        );
+//        if (!isConnected){
+//            Toast.makeText(mContext, "No connet to service", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//        boolean resultConnect = mConnectServerFTPService.ftpConnect(
+//                                    HOST_NAME,
+//                                    USER_NAME,
+//                                    PASS_WORD,
+//                                    PORT
+//        );
+//
+//        if (!resultConnect){
+//            Toast.makeText(mContext, "No connect to server, please check hostname, ...", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
 
-        if (!resultConnect){
-            Toast.makeText(mContext, "No connect to server, please check hostname, ...", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        mDialog = new ProgressDialog(mContext);
-        mDialog.setMessage("Uploading...");
-        mDialog.setCanceledOnTouchOutside(false);
-        mDialog.setMax(mListPath.size());
-        mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mDialog.show();
+//        mDialog = new ProgressDialog(mContext);
+//        mDialog.setMessage("Uploading...");
+//        mDialog.setCanceledOnTouchOutside(false);
+//        mDialog.setMax(mListPath.size());
+//        mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//        mDialog.show();
     }
 
     @Override
@@ -95,14 +93,16 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
                                 mPassWord,
                                 mPort);
             if (resultConnect){
+               mFTPClient.makeDirectory("result");
                 for (int i=0; i< mListPath.size(); i++) {
                     String pathFile = mListPath.get(i);
-                    String fileName = getFileName(pathFile) + i;
+                    String fileName = i
+                            + getFileName(pathFile);
                     boolean resultFile = ftpUpload(pathFile, fileName);
                     if (!resultFile){
                         mListFileFail.add(fileName);
                     }else {
-                        publishProgress(i + 1);
+//                        publishProgress(i + 1);
                     }
                 }
 
@@ -123,7 +123,7 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
             e.printStackTrace();
             String error ="Failure : " + e.getLocalizedMessage();
             Log.d(TAG, error);
-            mDialog.dismiss();
+//            mDialog.dismiss();
             return "upload fail!!!";
         }
     }
@@ -131,19 +131,19 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
     @Override
     protected void onProgressUpdate(Integer... values) {
         super.onProgressUpdate(values);
-        mDialog.setProgress(values[0]);
+//        mDialog.setProgress(values[0]);
     }
 
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        mDialog.dismiss();
+//        mDialog.dismiss();
         Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
 
     }
 
 
-    private void connectService(){
+    public void connectService(){
         Intent intent = new Intent(mContext, ConnectServerFTPService.class);
         mServiceConnection = new ServiceConnection() {
             @Override
@@ -195,8 +195,12 @@ public class UploadFile extends AsyncTask<String, Integer, String> implements As
             mFTPClient.enterLocalPassiveMode(); // important!
 
             FileInputStream in = new FileInputStream(new File(pathFile));
-            result = mFTPClient.storeFile("/"+ fileName, in);
+            String pathRemote = "/result/";
+            MainActivity.mListRemotefile.add(pathRemote + fileName);
+            boolean changeFolder = mFTPClient.changeWorkingDirectory(pathRemote);
+            result = mFTPClient.storeFile(fileName, in);
             in.close();
+
             return result;
 //            mFTPClient.logout();
 //            mFTPClient.disconnect();

@@ -1,7 +1,7 @@
 package com.adida.aka.testcsv;
 
 import android.Manifest;
-import android.app.*;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,13 +38,15 @@ public class MainActivity extends AppCompatActivity {
                          .getPath() + "/";
 //    private static final String FILE_NAME = "test1.csv";
     private static final String TAG = "MainActivity";
-    private static final String HOST_NAME = "192.168.0.102";
-    private static final String USER_NAME = "Aka";
+    private static final String HOST_NAME = "192.168.81.104";
+    private static final String USER_NAME = "IVC";
+    private static final String PASS_WORD = "12345678";
 //    private static final String USER_NAME = "ISB-VIETNAM\\tmha";
-    private static final String PASS_WORD = "0906304280";
 
     private static final String PORT = "21";
     private final int REQUEST_CODE_CAPTURE = 112;
+
+    public static List<String> mListRemotefile;
 
 
     private Button mBtnUpload;
@@ -53,6 +55,12 @@ public class MainActivity extends AppCompatActivity {
     private String mFileName;
     private String mPathFile;
     private List<String> mListPathFile;
+
+    private List<String> mListPathFile1;
+    private List<String> mListPathFile2;
+    private List<String> mListPathFile3;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,22 +76,46 @@ public class MainActivity extends AppCompatActivity {
         }
         mEdtFileName = (EditText) findViewById(R.id.edt_file_name);
         mListPathFile = new ArrayList<>();
+        mListRemotefile = new ArrayList<>();
+        mListPathFile1 = new ArrayList<>();
+        mListPathFile2 = new ArrayList<>();
+        mListPathFile3 = new ArrayList<>();
 
 
         mBtnUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mUploadFile = new UploadFile(MainActivity.this, mListPathFile);
-//                mUploadFile.execute(HOST_NAME,
-//                                    USER_NAME,
-//                                    PASS_WORD,
-//                                    PORT
-//                );
+                for (int i = 0 ;i < mListPathFile.size(); i++){
+                    if(i<=18){
+                        mListPathFile1.add(mListPathFile.get(i));
+                    }else if(i>18 && i<=36){
+                        mListPathFile2.add(mListPathFile.get(i));
+                    }else {
+                        mListPathFile3.add(mListPathFile.get(i));
+                    }
+                }
 
-                mUploadFile.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, HOST_NAME,
+                mUploadFile = new UploadFile(MainActivity.this, mListPathFile1);
+                mUploadFile.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+                        HOST_NAME,
                         USER_NAME,
                         PASS_WORD,
                         PORT );
+
+                UploadFile uploadFile2 = new UploadFile(MainActivity.this, mListPathFile2);
+                uploadFile2.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+                        HOST_NAME,
+                        USER_NAME,
+                        PASS_WORD,
+                        PORT );
+
+                UploadFile uploadFile3 = new UploadFile(MainActivity.this, mListPathFile3);
+                uploadFile3.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,
+                        HOST_NAME,
+                        USER_NAME,
+                        PASS_WORD,
+                        PORT );
+
 
             }
         });
@@ -113,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             String name = mEdtFileName.getText()
                                       .toString().trim();
-            for (int i=0; i< 2; i++) {
+            for (int i=0; i< 5; i++) {
                 String fileName = name + i + ".csv";
                 String path = EXTERNAL_PATH + fileName;
                 mListPathFile.add(path);
@@ -196,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Save a file: path for use with ACTION_VIEW intents
         String path = image.getAbsolutePath();
-        for (int i =0 ; i< 100; i++){
+        for (int i =0 ; i< 50; i++){
             mListPathFile.add(path);
         }
         return image;
@@ -290,4 +322,15 @@ public class MainActivity extends AppCompatActivity {
         mUploadFile.disconnectService();
         super.onDestroy();
     }
+
+    public void downloadFile(View view) {
+//        String path = Environment.getExternalStorageDirectory().getAbsolutePath() +
+//                "/" + Environment.DIRECTORY_DOWNLOADS + "/" + getFileName(mRemotefile);
+        DownloadFile downloadFile = new DownloadFile(this, mListRemotefile);
+        downloadFile.execute(HOST_NAME,
+                             USER_NAME,
+                             PASS_WORD,
+                PORT );
+    }
+
 }
